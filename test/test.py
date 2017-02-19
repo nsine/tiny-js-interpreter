@@ -1,14 +1,15 @@
-arr = [1, 2, 3]
+user_input = input('Enter array items through space: ');
+arr_items = user_input.split(' ')
+arr = []
+
+for item in arr_items:
+    arr.append(float(item))
+
 length = len(arr)
 sum = 0
 
 for i in range(length):
-    if i == 0:
-        sum += 0
-    elif i == 1:
-        if sum % 2 == 0:
-            sum == 0
-    else:
-        sum += arr[i]
+    sum += arr[i]
 
 avg = sum / length
+print(avg)

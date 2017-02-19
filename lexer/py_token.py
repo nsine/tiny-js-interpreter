@@ -1,4 +1,4 @@
-class PythonToken(object):
+class PyToken(object):
     def __init__(self, token_type, value, line, position):
         self.type = token_type
         self.value = value
@@ -6,4 +6,4 @@ class PythonToken(object):
         self.position = position
 
     def __str__(self):
-        return '%s at (%d, %d) - %s' % (self.type, self.line, self.position, self.value)
+        return '%s\t(%s) at line %d, position %d' % (self.value, self.type, self.line, self.position)
