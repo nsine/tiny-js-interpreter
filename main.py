@@ -16,4 +16,3 @@ with open('./test/test.py') as program_file:
             print(token)
     except LexerError as err:
         print(colorama.Fore.RED + str(err))
-

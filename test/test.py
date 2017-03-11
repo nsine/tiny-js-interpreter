@@ -1,4 +1,4 @@
-user_input = input('Enter array items through space: ');
+user_input = input('Enter array items through space: ')
 arr_items = user_input.split(' ')
 arr = []
 
