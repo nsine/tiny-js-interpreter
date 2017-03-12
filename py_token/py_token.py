@@ -6,4 +6,5 @@ class PyToken:
         self.position = position
 
     def __str__(self):
-        return '%s\t(%s) at line %d, position %d' % (self.value, self.kind, self.line, self.position)
+        return '%s\t(%s) at line %d, position %d' % \
+            (self.value, self.kind, self.line, self.position)

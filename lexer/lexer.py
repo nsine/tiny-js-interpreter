@@ -6,7 +6,11 @@ KEYWORDS = [
     'and', 'or', 'not',
     'if', 'else',
     'while', 'for', 'break', 'continue',
-    'print', 'return', 'def'
+    'return', 'def'
+]
+
+DEFAULT_FUNCTIONS = [
+    'print', 'float', 'int', 'str'
 ]
 
 RULES = [
@@ -14,10 +18,11 @@ RULES = [
     (r'\d+\.?\d*', 'FLOAT_NUMBER'),
     (r'\'.*?\'|".*?"', 'STRING'),
     ('|'.join(KEYWORDS), 'KEYWORD'),
+    ('|'.join(DEFAULT_FUNCTIONS), 'DEFAULT_FUNCTION'),
     (r'[a-zA-Z_]\w*', 'IDENTIFIER'),
     (r'\n', 'ENDLINE'),
     (r'=', 'EQUALS'),
-    (r'\+|-|\*|\*\*|/|&|\||\^|~|<|>|<=|>=|==|!=|\.', 'OPERATOR'),
+    (r'\+|-|\*|/|<|>|<=|>=|==|!=|\.|,', 'OPERATOR'),
     (r'\(|\)|\[|\]', 'DELIMITER'),
     (r':', 'COLON'),
     (r'^ *', 'INDENTATION')
@@ -33,7 +38,8 @@ TOKEN_CLASSES = {
     'OPERATOR': token_class.OperatorToken,
     'EQUALS': token_class.EqualsToken,
     'DELIMITER': token_class.DelimiterToken,
-    'COLON': token_class.ColonToken
+    'COLON': token_class.ColonToken,
+    'DEFAULT_FUNCTION': token_class.DefaultFunctionToken
 }
 
 class Lexer(object):
@@ -102,6 +108,8 @@ class Lexer(object):
 
             all_tokens = all_tokens + tokens + [token_class.EndlineToken('\\n',
                                                 tokens[0].line, len(self.lines[i]))]
+
+        all_tokens.append(token_class.EofToken(None, self.current_line_number, 0))
         return all_tokens
 
     def _analyze_line(self, line):

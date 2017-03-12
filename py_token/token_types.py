@@ -35,6 +35,16 @@ class OperatorToken(PyToken):
         super().__init__(value, line, position)
         self.kind = 'OPERATOR'
 
+class MathOperatorToken(PyToken):
+    def __init__(self, value, line, position):
+        super().__init__(value, line, position)
+        self.kind = 'MATH_OPERATOR'
+
+class CompareOperatorToken(PyToken):
+    def __init__(self, value, line, position):
+        super().__init__(value, line, position)
+        self.kind = 'COMPARE_OPERATOR'
+
 class DelimiterToken(PyToken):
     def __init__(self, value, line, position):
         super().__init__(value, line, position)
@@ -64,3 +74,13 @@ class ColonToken(PyToken):
     def __init__(self, value, line, position):
         super().__init__(value, line, position)
         self.kind = 'COLON'
+
+class EofToken(PyToken):
+    def __init__(self, value, line, position):
+        super().__init__(value, line, position)
+        self.kind = 'EOF'
+
+class DefaultFunctionToken(PyToken):
+    def __init__(self, value, line, position):
+        super().__init__(value, line, position)
+        self.kind = 'DEFAULT_FUNCTION'
