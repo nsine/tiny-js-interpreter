@@ -7,4 +7,4 @@ class PyToken:
 
     def __str__(self):
         return '%s\t(%s) at line %d, position %d' % \
-            (self.value, self.kind, self.line, self.position)
+            (self.value, self.kind, self.line + 1, self.position + 1)

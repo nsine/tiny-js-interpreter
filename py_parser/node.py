@@ -13,8 +13,6 @@ class Node(object):
         return self._str_with_indent(0)
 
     def _str_with_indent(self, indent):
-        if indent > 10:
-            return ''
         result = ''
         result += node_type_pretty[self.kind]
         if self.value is not None:

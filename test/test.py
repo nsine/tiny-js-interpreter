@@ -9,7 +9,7 @@ length = len(arr)
 sum = 0
 
 for i in range(length):
-    sum += arr[i]
+    sum = sum + arr[i]
 
 avg = sum / length
 print(avg)

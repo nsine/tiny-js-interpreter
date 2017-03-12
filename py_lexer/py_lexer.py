@@ -1,31 +1,31 @@
 import re
-from lexer.lexer_error import LexerError
+from py_lexer.py_lexer_error import PyLexerError
 import py_token.token_types as token_class
 
 KEYWORDS = [
     'and', 'or', 'not',
     'if', 'else',
-    'while', 'for', 'break', 'continue',
+    'while', 'for', 'in', 'break', 'continue',
     'return', 'def'
 ]
 
 DEFAULT_FUNCTIONS = [
-    'print', 'float', 'int', 'str'
+    'input', 'print', 'float', 'int', 'str', 'len', 'range'
 ]
 
 RULES = [
-    (r'(\d+)(\b|[^w])', 'INT_NUMBER'),
-    (r'\d+\.?\d*', 'FLOAT_NUMBER'),
+    (r'(\d+)(\b|[^\w])', 'INT_NUMBER'),
+    (r'(\d+\.?\d*)(\b|[^\w])', 'FLOAT_NUMBER'),
     (r'\'.*?\'|".*?"', 'STRING'),
-    ('|'.join(KEYWORDS), 'KEYWORD'),
-    ('|'.join(DEFAULT_FUNCTIONS), 'DEFAULT_FUNCTION'),
+    ('|'.join([r'\b{}\b'.format(word) for word in DEFAULT_FUNCTIONS]), 'DEFAULT_FUNCTION'),
+    ('|'.join(r'\b{}\b'.format(word) for word in KEYWORDS), 'KEYWORD'),
     (r'[a-zA-Z_]\w*', 'IDENTIFIER'),
     (r'\n', 'ENDLINE'),
+    (r'\+|-|\*|/|<=|>=|<|>|==|!=|\.|,', 'OPERATOR'),
     (r'=', 'EQUALS'),
-    (r'\+|-|\*|/|<|>|<=|>=|==|!=|\.|,', 'OPERATOR'),
     (r'\(|\)|\[|\]', 'DELIMITER'),
     (r':', 'COLON'),
-    (r'^ *', 'INDENTATION')
+    (r'^ +', 'INDENTATION')
 ]
 
 TOKEN_CLASSES = {
@@ -42,7 +42,7 @@ TOKEN_CLASSES = {
     'DEFAULT_FUNCTION': token_class.DefaultFunctionToken
 }
 
-class Lexer(object):
+class PyLexer(object):
     def __init__(self, text):
         self.text = text
         self.lines = text.split('\n')
@@ -85,7 +85,7 @@ class Lexer(object):
                 if file_indent_size is None:
                     file_indent_size = indent_size
                     indents.append(indents[-1] + 1)
-                    tokens[0].value = 1
+                    tokens[0] = token_class.IndentToken(None, tokens[0].line, tokens[0].position)
                 else:
                     if indent_size == (indents[-1]) * file_indent_size:
                         tokens.pop(0)
@@ -103,8 +103,8 @@ class Lexer(object):
                             tokens.insert(0, token_class.DedentToken(None, tokens[0].line,
                                                                      tokens[0].position))
                     else:
-                        raise LexerError('Incorrect indent size', self.current_line_number,
-                                         0, indent_size)
+                        raise PyLexerError('Incorrect indent size', self.current_line_number,
+                                           0, indent_size)
 
             all_tokens = all_tokens + tokens + [token_class.EndlineToken('\\n',
                                                 tokens[0].line, len(self.lines[i]))]
@@ -131,8 +131,9 @@ class Lexer(object):
         if position == 0:
             match = self.indent_regex.search(line, position)
             if match:
-                parsed_indent = token_class.IndentToken(match.group(0), self.current_line_number,
-                                                        position)
+                parsed_indent = token_class.IndentationToken(match.group(0),
+                                                             self.current_line_number,
+                                                             position)
                 position = match.end()
                 return (parsed_indent, position)
 
@@ -152,4 +153,4 @@ class Lexer(object):
             return (parsed_token, position)
 
         # if we're here, no rule matched
-        raise LexerError('Invalid token', self.current_line_number, position, line[position])
+        raise PyLexerError('Invalid token', self.current_line_number, position, line[position])

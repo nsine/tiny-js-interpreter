@@ -1,7 +1,7 @@
 import colorama
 
-from lexer.lexer import Lexer
-from lexer.lexer_error import LexerError
+from py_lexer.py_lexer import PyLexer
+from py_lexer.py_lexer_error import PyLexerError
 
 def run():
     colorama.init()
@@ -9,11 +9,11 @@ def run():
     with open('./test/test.py') as program_file:
         program_text = program_file.read()
 
-        lexer = Lexer(program_text)
+        py_lexer = PyLexer(program_text)
 
         try:
-            tokens = lexer.get_tokens()
+            tokens = py_lexer.get_tokens()
             for token in tokens:
                 print(token)
-        except LexerError as err:
+        except PyLexerError as err:
             print(colorama.Fore.RED + str(err))
