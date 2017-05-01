@@ -1,6 +1,6 @@
-from py_parser.exceptions.py_parser_error import PyParserError
+from js_parser.exceptions.js_parser_error import JsParserError
 
-class ExpectedButFoundTokenError(PyParserError):
+class ExpectedButFoundTokenError(JsParserError):
     def __init__(self, expected_token_value, found_token_value, line, position):
         super().__init__(line, position, 'Unexpected token')
         self.expected_token = expected_token_value

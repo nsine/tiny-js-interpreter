@@ -1,4 +1,4 @@
-class PyLexerError(Exception):
+class JsLexerError(Exception):
     def __init__(self, message, line, position, value):
         self.message = message
         self.line = line

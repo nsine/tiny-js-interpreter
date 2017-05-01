@@ -1,9 +1,9 @@
 import colorama
 
-from py_lexer.py_lexer import PyLexer
-from py_parser.py_parser import PyParser
-from py_parser.exceptions.py_parser_error import PyParserError
-from py_lexer.py_lexer_error import PyLexerError
+from js_lexer.js_lexer import JsLexer
+from js_parser.js_parser import JsParser
+from js_parser.exceptions.js_parser_error import JsParserError
+from js_lexer.js_lexer_error import JsLexerError
 
 def run():
     colorama.init()
@@ -11,10 +11,10 @@ def run():
     with open('./test/test.js') as program_file:
         program_text = program_file.read()
 
-        py_lexer = PyLexer(program_text)
-        py_parse = PyParser(py_lexer)
+        js_lexer = JsLexer(program_text)
+        py_parse = JsParser(js_lexer)
         try:
             syntax_tree = py_parse.parse()
             print(syntax_tree)
-        except (PyParserError, PyLexerError) as err:
+        except (JsParserError, JsLexerError) as err:
             print(colorama.Fore.RED + str(err))

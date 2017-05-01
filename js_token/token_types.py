@@ -1,4 +1,4 @@
-from py_token.py_token import PyToken
+from js_token.js_token import PyToken
 
 class IdentifierToken(PyToken):
     def __init__(self, value, line, position):

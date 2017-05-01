@@ -1,6 +1,6 @@
-from py_parser.exceptions.py_parser_error import PyParserError
+from js_parser.exceptions.js_parser_error import JsParserError
 
-class UnexpectedTokenError(PyParserError):
+class UnexpectedTokenError(JsParserError):
     def __init__(self, token_value, line, position):
         super().__init__(line, position, 'Unexpected token')
         self.token = token_value

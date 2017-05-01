@@ -1,9 +1,15 @@
-from py_parser.node_type import node_type_pretty
+from js_parser.node_type import node_type_pretty
 
 class Node(object):
     def __init__(self, kind, value=None, children=None):
         self.kind = kind
         self.value = value
+
+        self.position = {
+            'line': 0,
+            'position': 0
+        }
+
         if children is None:
             self.children = []
         else:

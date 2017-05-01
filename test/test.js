@@ -1,18 +1,19 @@
-let user_input = input('Enter array items through space: ');
-let arr_items = user_input.split(' ');
+var user_input = input('Enter array items through space: ');
+var arr_items = user_input.split(' ');
 
-let arr = [];
+var arr = [];
+var i = 0;
 
-for (let i = 0; i < arr_items.length; i = i + 1) {
-    arr.push(parseInt(item));
+for (i = 0; i < arr_items.length; i = i + 1) {
+    arr.append(parseInt(item));
 }
 
-let length = arr.length;
-let sum = 0;
+var length = arr.length;
+var sum = 0;
 
-for (let i = 0; i < length; i = i + 1) {
+for (i = 0; i < length; i = i + 1) {
     sum = sum + arr[i];
 }
 
-let avg = sum / length;
+var avg = sum / length;
 print(avg);

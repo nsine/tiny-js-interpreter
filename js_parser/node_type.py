@@ -15,7 +15,7 @@ class NodeType:
 node_type_pretty = [
     'Expression', 'Block', 'Program',
     'Variable', 'Assignment',
-    'IntLiteral', 'FloatLiteral', 'StringLiteral', 'ArrayLiteral', 'Undefined'
+    'IntLiteral', 'FloatLiteral', 'StringLiteral', 'ArrayLiteral', 'Undefined',
     'Add', 'Sub', 'Mul', 'Div',
     'Equals', 'NotEquals', 'Greater', 'Lower', 'GreaterEq', 'LowerEq',
     'Point', 'ByIndex',

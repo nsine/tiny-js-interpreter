@@ -1,15 +1,15 @@
 import re
-from py_lexer.py_lexer_error import PyLexerError
-import py_token.token_types as token_class
+from js_lexer.js_lexer_error import JsLexerError
+import js_token.token_types as token_class
 
 KEYWORDS = [
     'if', 'else',
     'while', 'for', 'break', 'continue',
-    'return', 'function', 'let', 'undefined'
+    'return', 'function', 'var', 'undefined'
 ]
 
 DEFAULT_FUNCTIONS = [
-    'input', 'print', 'float', 'int', 'str', 'len', 'range'
+    'input', 'print', 'parseInt', 'parseFloat'
 ]
 
 RULES = [
@@ -41,7 +41,7 @@ TOKEN_CLASSES = {
     'DEFAULT_FUNCTION': token_class.DefaultFunctionToken
 }
 
-class PyLexer(object):
+class JsLexer(object):
     def __init__(self, text):
         self.text = text
         self.lines = text.split('\n')
@@ -100,7 +100,7 @@ class PyLexer(object):
                             tokens.insert(0, token_class.DedentToken(None, tokens[0].line,
                                                                      tokens[0].position))
                     else:
-                        raise PyLexerError('Incorrect indent size', self.current_line_number,
+                        raise JsLexerError('Incorrect indent size', self.current_line_number,
                                            0, indent_size)
 
             all_tokens = all_tokens + tokens
@@ -140,4 +140,4 @@ class PyLexer(object):
             return (parsed_token, position)
 
         # if we're here, no rule matched
-        raise PyLexerError('Invalid token', self.current_line_number, position, line[position])
+        raise JsLexerError('Invalid token', self.current_line_number, position, line[position])

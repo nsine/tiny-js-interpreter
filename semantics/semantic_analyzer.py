@@ -1,5 +1,5 @@
-from py_parser.node_type import NodeType
-from py_parser.checker import get_args, check
+from js_parser.node_type import NodeType
+from js_parser.checker import get_args, check
 import subprocess
 import re
 

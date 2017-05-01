@@ -1,11 +1,9 @@
-from py_parser.node import Node
-from py_parser.node_type import NodeType
-import py_token.token_types as tt
-from py_parser.exceptions.py_parser_error import PyParserError
-from py_parser.exceptions.unexpected_token_error import UnexpectedTokenError
-from py_parser.exceptions.expected_but_found_token_error import ExpectedButFoundTokenError
+from js_parser.node import Node
+from js_parser.node_type import NodeType
+import js_token.token_types as tt
+from .exceptions import UnexpectedTokenError, JsParserError, ExpectedButFoundTokenError
 
-class PyParser:
+class JsParser:
     def __init__(self, lexer):
         self.lexer = lexer
         self.tokens = []
@@ -25,6 +23,8 @@ class PyParser:
         if (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
             self._next_token()
             return self.callable(node)
+        else:
+            return node
 
     def sequence(self, end_seq_value):
         node = Node(NodeType.Seq)
@@ -149,6 +149,28 @@ class PyParser:
             node = Node(NodeType.Set, children=[node, self.expr()])
         return node
 
+    def decl_expr(self):
+        node = Node(NodeType.Decl)
+        self._next_token()
+        if not isinstance(self.token, tt.IdentifierToken):
+            raise ExpectedButFoundTokenError('identifier', self.token.value, self.token.line,
+                                             self.token.position)
+        node.children.append(Node(NodeType.Var, self.token.value))
+
+        var_init = self.expr_with_semicolon()
+        node.children.append(var_init)
+        return node
+
+    def expr_with_semicolon(self):
+        if isinstance(self.token, tt.KeywordToken) and self.token.value == 'var':
+            return self.decl_expr()
+        node = self.expr()
+        if not isinstance(self.token, tt.SemicolonToken):
+            raise ExpectedButFoundTokenError(';', self.token.value, self.token.line,
+                                             self.token.position)
+        self._next_token()
+        return node
+
     def paren_expr(self):
         if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
             raise ExpectedButFoundTokenError('(', self.token.value, self.token.line,
@@ -161,123 +183,74 @@ class PyParser:
         self._next_token()
         return node
 
+    def if_statement(self):
+        node = Node(NodeType.If)
+        self._next_token()
+        if_condition = self.paren_expr()
+        if_body = self.block()
+
+        node.children = [if_condition, if_body]
+
+        if isinstance(self.token, tt.KeywordToken) and \
+                self.token.value == 'else':
+            node.kind = NodeType.IfWithElse
+            self._next_token()
+            node.children.append(self.block())
+
+        return node
+
+    def for_statement(self):
+        node = Node(NodeType.For)
+        self._next_token()
+
+        if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
+            raise ExpectedButFoundTokenError('(', self.token.value, self.token.line,
+                                             self.token.position)
+        self._next_token()
+        for_init = self.expr_with_semicolon()
+        for_condition = self.expr_with_semicolon()
+        for_step = self.expr()
+
+        if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == ')'):
+            raise ExpectedButFoundTokenError(')', self.token.value, self.token.line,
+                                             self.token.position)
+        self._next_token()
+        for_body = self.block()
+
+        node.children = [for_init, for_condition, for_step, for_body]
+        return node
+
+    def while_statement(self):
+        node = Node(NodeType.While)
+        self._next_token()
+
+        while_condition = self.paren_expr()
+        while_body = self.block()
+
+        node.children = [while_condition, while_body]
+        return node
+
     def statement(self):
         if isinstance(self.token, tt.KeywordToken) and self.token.value == 'if':
-            node = Node(NodeType.If)
-            self._next_token()
-            if_condition = self.paren_expr()
-            if not isinstance(self.token, tt.ColonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise ExpectedButFoundTokenError(':', prev_token.value, prev_token.line,
-                                                 prev_token.position)
-            self._next_token()
-            if not isinstance(self.token, tt.SemicolonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise PyParserError(prev_token.line, None,
-                                    "Body of the 'if' block cannot be on the same line")
-            self._next_token()
-
-            if_body = self.block()
-
-            node.children = [if_condition, if_body]
-
-            if isinstance(self.token, tt.KeywordToken) and \
-                    self.token.value == 'else':
-                node.kind = NodeType.IfWithElse
-                self._next_token()
-                node.children.append(self.block())
+            node = self.if_statement()
         elif isinstance(self.token, tt.KeywordToken) and self.token.value == 'while':
-            node = Node(NodeType.While)
-            self._next_token()
-
-            while_condition = self.paren_expr()
-
-            if not isinstance(self.token, tt.ColonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise ExpectedButFoundTokenError(':', self.token.value,
-                                                 self.token.line, self.token.position)
-            self._next_token()
-            if not isinstance(self.token, tt.SemicolonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise PyParserError(prev_token.line, None,
-                                    "Body of the 'while' block cannot be on the same line")
-            self._next_token()
-
-            while_body = self.block()
-
-            node.children = [while_condition, while_body]
+            node = self.while_statement()
         elif isinstance(self.token, tt.KeywordToken) and self.token.value == 'for':
-            node = Node(NodeType.For)
-            self._next_token()
-
-            if not isinstance(self.token, tt.IdentifierToken):
-                raise ExpectedButFoundTokenError('identifier', self.token.value, self.token.line,
-                                                 self.token.position)
-
-            for_variable = Node(NodeType.Var, self.token.value)
-            self._next_token()
-            if not (isinstance(self.token, tt.KeywordToken) and self.token.value == 'in'):
-                raise ExpectedButFoundTokenError('in', self.token.value, self.token.line,
-                                                 self.token.position)
-
-            self._next_token()
-            for_collection = self.expr()
-
-            if not isinstance(self.token, tt.ColonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise ExpectedButFoundTokenError(':', self.token.value,
-                                                 self.token.line, self.token.position)
-            self._next_token()
-            if not isinstance(self.token, tt.SemicolonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise PyParserError(prev_token.line, None,
-                                    "Body of the 'for' block cannot be on the same line")
-            self._next_token()
-
-            for_body = self.block()
-
-            node.children = [for_variable, for_collection, for_body]
-        if isinstance(self.token, tt.KeywordToken) and self.token.value == 'let':
-            node = Node(NodeType.Decl)
-            self._next_token()
-            if not isinstance(self.token, tt.IdentifierToken):
-                raise ExpectedButFoundTokenError('identifier', self.token.value, self.token.line,
-                                                 self.token.position)
-            node.children.append(self.token.value)
-
-            if isinstance(self.tokens[self.token_index + 1], tt.EqualsToken):
-                init_node = self.expr()
-            elif isinstance(self.tokens[self.token_index + 1], tt.SemicolonToken):
-                init_node_var = Node(NodeType.Var, self.token.value)
-                init_node = Node(NodeType.Set, children=[init_node_var, Node(NodeType.Undefined)])
-            else:
-                raise ExpectedButFoundTokenError('initialization or semicolon', self.token.value, self.token.line,
-                                                 self.token.position)
-            node.children.append(init_node)
-
-            if not isinstance(self.token, tt.SemicolonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise ExpectedButFoundTokenError(';', prev_token.value, prev_token.line,
-                                                 prev_token.position)
-            self._next_token()
+            node = self.for_statement()
         else:
-            node = Node(NodeType.Expr, children=[self.expr()])
-            if not isinstance(self.token, tt.SemicolonToken):
-                prev_token = self.tokens[self.token_index - 1]
-                raise UnexpectedTokenError(self.token.value, self.token.line, self.token.position)
-            self._next_token()
+            node = Node(NodeType.Expr, children=[self.expr_with_semicolon()])
         return node
 
     def block(self):
-        if isinstance(self.token, tt.IndentToken):
+        if isinstance(self.token, tt.DelimiterToken) and self.token.value == '{':
             node = Node(NodeType.Block)
             self._next_token()
             while True:
-                if isinstance(self.token, tt.DedentToken):
+                if isinstance(self.token, tt.DelimiterToken) and self.token.value == '}':
                     self._next_token()
                     return node
                 if isinstance(self.token, tt.EofToken):
-                    return node
+                    raise JsParserError(None, None, 'Unexpected end of file')
                 node.children.append(self.statement())
 
     def program(self):
@@ -293,7 +266,7 @@ class PyParser:
         self._next_token()
         node = self.program()
         if not isinstance(self.token, tt.EofToken):
-            raise PyParserError(None, None, "Invalid syntax")
+            raise JsParserError(None, None, "Invalid syntax")
         return node
 
     def _next_token(self):
