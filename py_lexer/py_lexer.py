@@ -3,10 +3,9 @@ from py_lexer.py_lexer_error import PyLexerError
 import py_token.token_types as token_class
 
 KEYWORDS = [
-    'and', 'or', 'not',
     'if', 'else',
-    'while', 'for', 'in', 'break', 'continue',
-    'return', 'def'
+    'while', 'for', 'break', 'continue',
+    'return', 'function', 'let', 'undefined'
 ]
 
 DEFAULT_FUNCTIONS = [
@@ -20,10 +19,10 @@ RULES = [
     ('|'.join([r'\b{}\b'.format(word) for word in DEFAULT_FUNCTIONS]), 'DEFAULT_FUNCTION'),
     ('|'.join(r'\b{}\b'.format(word) for word in KEYWORDS), 'KEYWORD'),
     (r'[a-zA-Z_]\w*', 'IDENTIFIER'),
-    (r'\n', 'ENDLINE'),
-    (r'\+|-|\*|/|<=|>=|<|>|==|!=|\.|,', 'OPERATOR'),
+    (r';', 'SEMICOLON'),
+    (r'\+|-|\*|/|<=|>=|<|>|==|!=|\.|,|&&|\|\||!', 'OPERATOR'),
     (r'=', 'EQUALS'),
-    (r'\(|\)|\[|\]', 'DELIMITER'),
+    (r'\(|\)|\[|\]|\{|\}', 'DELIMITER'),
     (r':', 'COLON'),
     (r'^ +', 'INDENTATION')
 ]
@@ -34,7 +33,7 @@ TOKEN_CLASSES = {
     'STRING': token_class.StringToken,
     'KEYWORD': token_class.KeywordToken,
     'IDENTIFIER': token_class.IdentifierToken,
-    'ENDLINE': token_class.EndlineToken,
+    'SEMICOLON': token_class.SemicolonToken,
     'OPERATOR': token_class.OperatorToken,
     'EQUALS': token_class.EqualsToken,
     'DELIMITER': token_class.DelimiterToken,
@@ -62,14 +61,12 @@ class PyLexer(object):
 
         self.valid_token_regex = re.compile('|'.join(regex_parts))
         self.skip_whitespaces_regex = re.compile(r'\S+')
-        self.indent_regex = re.compile(r'^ +')
 
     def get_tokens(self):
         all_tokens = []
 
         indents = []
         indents.append(0)
-        file_indent_size = None
 
         for i in range(len(self.lines)):
             self.current_line_number = i
@@ -106,8 +103,7 @@ class PyLexer(object):
                         raise PyLexerError('Incorrect indent size', self.current_line_number,
                                            0, indent_size)
 
-            all_tokens = all_tokens + tokens + [token_class.EndlineToken('\\n',
-                                                tokens[0].line, len(self.lines[i]))]
+            all_tokens = all_tokens + tokens
 
         all_tokens.append(token_class.EofToken(None, self.current_line_number, 0))
         return all_tokens
@@ -127,15 +123,6 @@ class PyLexer(object):
     def _get_token(self, line, position):
         if position >= len(line):
             return (None, position)
-
-        if position == 0:
-            match = self.indent_regex.search(line, position)
-            if match:
-                parsed_indent = token_class.IndentationToken(match.group(0),
-                                                             self.current_line_number,
-                                                             position)
-                position = match.end()
-                return (parsed_indent, position)
 
         match = self.skip_whitespaces_regex.search(line, position)
 

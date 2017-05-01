@@ -6,7 +6,7 @@ from py_lexer.py_lexer_error import PyLexerError
 def run():
     colorama.init()
 
-    with open('./test/test.py') as program_file:
+    with open('./test/test.js') as program_file:
         program_text = program_file.read()
 
         py_lexer = PyLexer(program_text)

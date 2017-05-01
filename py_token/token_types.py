@@ -25,10 +25,10 @@ class KeywordToken(PyToken):
         super().__init__(value, line, position)
         self.kind = 'KEYWORD'
 
-class EndlineToken(PyToken):
+class SemicolonToken(PyToken):
     def __init__(self, value, line, position):
         super().__init__(value, line, position)
-        self.kind = 'ENDLINE'
+        self.kind = 'SEMICOLON'
 
 class OperatorToken(PyToken):
     def __init__(self, value, line, position):

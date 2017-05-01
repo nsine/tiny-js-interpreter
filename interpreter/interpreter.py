@@ -20,15 +20,3 @@ class Interpreter:
                 'error': str(err)
             }
 
-        analyzer = SemanticAnalyzer(syntax_tree)
-        analyze_result = analyzer.check()
-
-        if analyze_result is None:
-            return {
-                'success': True
-            }
-        else:
-            return {
-                'success': False,
-                'error': analyze_result
-            }
