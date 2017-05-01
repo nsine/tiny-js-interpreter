@@ -1,9 +1,10 @@
 user_input = input('Enter array items through space: ')
 arr_items = user_input.split(' ')
+
 arr = []
 
 for item in arr_items:
-    arr.append(float(item))
+    arr.append(int(item))
 
 length = len(arr)
 sum = 0
