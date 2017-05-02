@@ -23,5 +23,5 @@ class JsParserError(Exception):
         if self.line is not None:
             result += " at line {}".format(self.line + 1)
         if self.position is not None:
-            result += ",position {}".format(self.position + 1)
+            result += ", position {}".format(self.position + 1)
         return result

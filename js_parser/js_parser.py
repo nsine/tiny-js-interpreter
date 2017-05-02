@@ -1,3 +1,5 @@
+import re
+
 from js_parser.node import Node
 from js_parser.node_type import NodeType
 import js_token.token_types as tt
@@ -53,6 +55,14 @@ class JsParser:
             self._next_token()
             return Node(NodeType.ArrayConst, children=[self.sequence(']')])
 
+        if isinstance(self.token, tt.DelimiterToken) and self.token.value == '{':
+            raise JsParserError(self.token.line, self.token.position, 'Objects are not supported :(')
+
+        if isinstance(self.token, tt.KeywordToken) and (self.token.value == 'true' or self.token.value == 'false'):
+            node = Node(NodeType.BooleanConst, self.token.value)
+            self._next_token()
+            return node
+
         if isinstance(self.token, tt.IdentifierToken):
             node = Node(NodeType.Var, self.token.value)
             self._next_token()
@@ -74,6 +84,7 @@ class JsParser:
             return node
 
         node_type = None
+        node_value = self.token.value
         if isinstance(self.token, tt.IdentifierToken):
             node_type = NodeType.Var
         elif isinstance(self.token, tt.IntNumberToken):
@@ -82,9 +93,10 @@ class JsParser:
             node_type = NodeType.FloatConst
         elif isinstance(self.token, tt.StringToken):
             node_type = NodeType.StringConst
+            node_value = re.match(r'\'(.*)?\'', node_value).group(1)
 
         if node_type is not None:
-            node = Node(node_type, self.token.value)
+            node = Node(node_type, node_value)
             self._next_token()
 
             if isinstance(self.token, tt.OperatorToken) and self.token.value == '.':
@@ -111,6 +123,8 @@ class JsParser:
                     kind = NodeType.Mul
                 elif self.token.value == '/':
                     kind = NodeType.Div
+                elif self.token.value == '%':
+                    kind = NodeType.Mod
                 else:
                     break
             else:

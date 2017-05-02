@@ -5,11 +5,12 @@ import js_token.token_types as token_class
 KEYWORDS = [
     'if', 'else',
     'while', 'for', 'break', 'continue',
-    'return', 'function', 'var', 'undefined'
+    'return', 'function', 'var', 'undefined',
+    'true', 'false'
 ]
 
 DEFAULT_FUNCTIONS = [
-    'input', 'print', 'parseInt', 'parseFloat'
+    'input', 'print', 'parseInt', 'parseFloat', 'Math.sqrt'
 ]
 
 RULES = [
@@ -20,7 +21,7 @@ RULES = [
     ('|'.join(r'\b{}\b'.format(word) for word in KEYWORDS), 'KEYWORD'),
     (r'[a-zA-Z_]\w*', 'IDENTIFIER'),
     (r';', 'SEMICOLON'),
-    (r'\+|-|\*|/|<=|>=|<|>|==|!=|\.|,|&&|\|\||!', 'OPERATOR'),
+    (r'\+|-|\*|%|/|<=|>=|<|>|==|!=|\.|,|&&|\|\||!', 'OPERATOR'),
     (r'=', 'EQUALS'),
     (r'\(|\)|\[|\]|\{|\}', 'DELIMITER'),
     (r':', 'COLON'),

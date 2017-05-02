@@ -34,3 +34,9 @@ class Scope:
         else:
             self.add_variable(variable_name)
             return True
+
+    def get_variable(self, variable_name):
+        for scope in reversed(self._scopes):
+            if variable_name in scope:
+                return scope[variable_name]
+        return None
