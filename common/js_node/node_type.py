@@ -1,7 +1,7 @@
 class NodeType:
     Expr, Block, Program, \
         Var, Set, \
-        IntConst, FloatConst, StringConst, ArrayConst, BooleanConst, Undefined, \
+        NumberConst, StringConst, ArrayConst, BooleanConst, Undefined, \
         Add, Sub, Mul, Div, Mod, \
         Equals, NotEquals, Greater, Lower, GreaterEq, LowerEq, \
         Point, ByIndex, \
@@ -9,13 +9,13 @@ class NodeType:
         If, IfWithElse, \
         DefaultFunction, \
         Attribute, Call, \
-        Seq, Decl = range(33)
+        Seq, Decl = range(32)
 
 
 node_type_pretty = [
     'Expression', 'Block', 'Program',
     'Variable', 'Assignment',
-    'IntLiteral', 'FloatLiteral', 'StringLiteral', 'ArrayLiteral', 'BooleanConst', 'Undefined',
+    'NumberLiteral', 'StringLiteral', 'ArrayLiteral', 'BooleanConst', 'Undefined',
     'Add', 'Sub', 'Mul', 'Div', 'Mod',
     'Equals', 'NotEquals', 'Greater', 'Lower', 'GreaterEq', 'LowerEq',
     'Point', 'ByIndex',

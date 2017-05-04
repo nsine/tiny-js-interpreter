@@ -15,8 +15,7 @@ DEFAULT_FUNCTIONS = [
 ]
 
 RULES = [
-    (r'(\d+)(\b|[^\w])', 'INT_NUMBER'),
-    (r'(\d+\.?\d*)(\b|[^\w])', 'FLOAT_NUMBER'),
+    (r'(\d+\.?\d*)(\b|[^\w])', 'NUMBER'),
     (r'\'.*?\'|".*?"', 'STRING'),
     ('|'.join([r'\b{}\b'.format(word) for word in DEFAULT_FUNCTIONS]), 'DEFAULT_FUNCTION'),
     ('|'.join(r'\b{}\b'.format(word) for word in KEYWORDS), 'KEYWORD'),
@@ -25,13 +24,11 @@ RULES = [
     (r'\+|-|\*|%|/|<=|>=|<|>|==|!=|\.|,|&&|\|\||!', 'OPERATOR'),
     (r'=', 'EQUALS'),
     (r'\(|\)|\[|\]|\{|\}', 'DELIMITER'),
-    (r':', 'COLON'),
-    (r'^ +', 'INDENTATION')
+    (r':', 'COLON')
 ]
 
 TOKEN_CLASSES = {
-    'INT_NUMBER': token_class.IntNumberToken,
-    'FLOAT_NUMBER': token_class.FloatNumberToken,
+    'NUMBER': token_class.NumberToken,
     'STRING': token_class.StringToken,
     'KEYWORD': token_class.KeywordToken,
     'IDENTIFIER': token_class.IdentifierToken,
@@ -67,43 +64,11 @@ class JsLexer(object):
     def get_tokens(self):
         all_tokens = []
 
-        indents = []
-        indents.append(0)
-
         for i in range(len(self.lines)):
             self.current_line_number = i
             tokens = self._analyze_line(self.lines[i])
             if len(tokens) == 0:
                 continue
-
-            indent_size = 0
-            if isinstance(tokens[0], token_class.IndentationToken):
-                indent_size = len(tokens[0].value)
-
-            if indent_size != indents[-1]:
-                if file_indent_size is None:
-                    file_indent_size = indent_size
-                    indents.append(indents[-1] + 1)
-                    tokens[0] = token_class.IndentToken(None, PositionInFile(tokens[0].line, tokens[0].position))
-                else:
-                    if indent_size == (indents[-1]) * file_indent_size:
-                        tokens.pop(0)
-                    elif indent_size == (indents[-1] + 1) * file_indent_size:
-                        tokens[0] = token_class.IndentToken(None, PositionInFile(tokens[0].line,
-                                                            tokens[0].position))
-                        indents.append(indents[-1] + 1)
-                    elif indent_size % file_indent_size == 0 and \
-                            indent_size < indents[-1] * file_indent_size:
-                        if isinstance(tokens[0], token_class.IndentationToken):
-                            tokens.pop(0)
-
-                        while indents[-1] * file_indent_size > indent_size:
-                            indents.pop()
-                            tokens.insert(0, token_class.DedentToken(None, PositionInFile(tokens[0].line,
-                                                                     tokens[0].position)))
-                    else:
-                        raise JsLexerError('Incorrect indent size', PositionInFile(self.current_line_number,
-                                           0), indent_size)
 
             all_tokens = all_tokens + tokens
 

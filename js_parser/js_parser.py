@@ -85,10 +85,8 @@ class JsParser:
         node_value = self.token.value
         if isinstance(self.token, tt.IdentifierToken):
             node_type = NodeType.Var
-        elif isinstance(self.token, tt.IntNumberToken):
-            node_type = NodeType.IntConst
-        elif isinstance(self.token, tt.FloatNumberToken):
-            node_type = NodeType.FloatConst
+        elif isinstance(self.token, tt.NumberToken):
+            node_type = NodeType.NumberConst
         elif isinstance(self.token, tt.StringToken):
             node_type = NodeType.StringConst
             node_value = re.match(r'\'(.*)?\'', node_value).group(1)

@@ -28,7 +28,7 @@ class JsExecutor:
         self.executors[NodeType.Decl] = self._execute_declaration_statement
         self.executors[NodeType.Set] = self._execute_assignment_statement
         self.executors[NodeType.Call] = self._execute_call
-        self.executors[NodeType.IntConst] = self._execute_int
+        self.executors[NodeType.NumberConst] = self._execute_number
         self.executors[NodeType.StringConst] = self._execute_string
         self.executors[NodeType.ArrayConst] = self._execute_array
         self.executors[NodeType.Var] = self._execute_var
@@ -169,11 +169,8 @@ class JsExecutor:
     def _execute_string(self, node, scope):
         return JsString(node.value)
 
-    def _execute_int(self, node, scope):
+    def _execute_number(self, node, scope):
         return JsNumber(int(node.value))
-
-    def _execute_float(self, node, scope):
-        return JsNumber(float(node.value))
 
     def _execute_array(self, node, scope):
         arr_items = [self._execute_node(arr_item_node, scope) for arr_item_node in node.children[0].children]
