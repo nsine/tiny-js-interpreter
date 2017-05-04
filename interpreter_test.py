@@ -1,6 +1,6 @@
 import colorama
 
-from interpreter.interpreter import Interpreter
+from js_executor import JsExecutor
 
 def run():
     colorama.init()
@@ -8,10 +8,10 @@ def run():
     with open('./test/test.js') as program_file:
         program_text = program_file.read()
 
-        interpreter = Interpreter(program_text)
-        interpreter.execute()
+        js_executor = JsExecutor(program_text)
+        js_executor.execute()
 
         # try:
-        #     interpreter.execute()
+        #     js_executor.execute()
         # except Exception as err:
         #     print(colorama.Fore.RED + str(err))

@@ -1,9 +1,9 @@
 import re
 
-from js_parser.node import Node
-from js_parser.node_type import NodeType
-import js_token.token_types as tt
-from .exceptions import UnexpectedTokenError, JsParserError, ExpectedButFoundTokenError
+import common.js_token.token_types as tt
+from common.js_node import JsNode, NodeType
+from common import PositionInFile
+from .errors import UnexpectedTokenError, JsParserError, ExpectedButFoundTokenError
 
 class JsParser:
     def __init__(self, lexer):
@@ -13,13 +13,12 @@ class JsParser:
         self.token = None
 
     def callable(self, source_node):
-        return Node(NodeType.Call, children=[source_node, self.sequence(')')])
+        return JsNode(NodeType.Call, children=[source_node, self.sequence(')')])
 
     def attribute(self, source_node):
         if not isinstance(self.token, tt.IdentifierToken):
-            raise ExpectedButFoundTokenError('attribute name', self.token.value,
-                                             self.token.line, self.token.position)
-        node = Node(NodeType.Attribute, self.token.value, children=[source_node])
+            raise ExpectedButFoundTokenError('attribute name', self.token.value, self.token.position)
+        node = JsNode(NodeType.Attribute, self.token.value, children=[source_node], position=self.token.position)
         self._next_token()
 
         if (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
@@ -29,7 +28,7 @@ class JsParser:
             return node
 
     def sequence(self, end_seq_value):
-        node = Node(NodeType.Seq)
+        node = JsNode(NodeType.Seq)
         while True:
             if isinstance(self.token, tt.DelimiterToken) and self.token.value == end_seq_value:
                 self._next_token()
@@ -40,11 +39,11 @@ class JsParser:
             elif isinstance(self.token, tt.DelimiterToken) and self.token.value == end_seq_value:
                 continue
             else:
-                raise UnexpectedTokenError(self.token.value, self.token.line, self.token.position)
+                raise UnexpectedTokenError(self.token.value, self.token.position)
 
     def term(self):
         if isinstance(self.token, tt.DefaultFunctionToken):
-            node = Node(NodeType.DefaultFunction, self.token.value)
+            node = JsNode(NodeType.DefaultFunction, self.token.value, position=self.token.position)
             self._next_token()
             if isinstance(self.token, tt.DelimiterToken) and self.token.value == '(':
                 self._next_token()
@@ -53,18 +52,18 @@ class JsParser:
 
         if isinstance(self.token, tt.DelimiterToken) and self.token.value == '[':
             self._next_token()
-            return Node(NodeType.ArrayConst, children=[self.sequence(']')])
+            return JsNode(NodeType.ArrayConst, children=[self.sequence(']')], position=self.token.position)
 
         if isinstance(self.token, tt.DelimiterToken) and self.token.value == '{':
-            raise JsParserError(self.token.line, self.token.position, 'Objects are not supported :(')
+            raise JsParserError(self.token.position, 'Objects are not supported :(')
 
         if isinstance(self.token, tt.KeywordToken) and (self.token.value == 'true' or self.token.value == 'false'):
-            node = Node(NodeType.BooleanConst, self.token.value)
+            node = JsNode(NodeType.BooleanConst, self.token.value, position=self.token.position)
             self._next_token()
             return node
 
         if isinstance(self.token, tt.IdentifierToken):
-            node = Node(NodeType.Var, self.token.value)
+            node = JsNode(NodeType.Var, self.token.value, position=self.token.position)
             self._next_token()
 
             if isinstance(self.token, tt.OperatorToken) and self.token.value == '.':
@@ -75,12 +74,11 @@ class JsParser:
                 node = self.callable(node)
             elif isinstance(self.token, tt.DelimiterToken) and self.token.value == '[':
                 self._next_token()
-                node = Node(NodeType.ByIndex, children=[node, self.expr()])
+                node = JsNode(NodeType.ByIndex, children=[node, self.expr()], position=self.token.position)
                 if isinstance(self.token, tt.DelimiterToken) and self.token.value == ']':
                     self._next_token()
                 else:
-                    raise ExpectedButFoundTokenError(']', self.token.value, self.token.line,
-                                                     self.token.position)
+                    raise ExpectedButFoundTokenError(']', self.token.value, self.token.position)
             return node
 
         node_type = None
@@ -96,7 +94,7 @@ class JsParser:
             node_value = re.match(r'\'(.*)?\'', node_value).group(1)
 
         if node_type is not None:
-            node = Node(node_type, node_value)
+            node = JsNode(node_type, node_value, position=self.token.position)
             self._next_token()
 
             if isinstance(self.token, tt.OperatorToken) and self.token.value == '.':
@@ -109,7 +107,7 @@ class JsParser:
         elif isinstance(self.token, tt.DelimiterToken) and self.token.value == '(':
             return self.paren_expr()
         else:
-            raise UnexpectedTokenError(self.token.value, self.token.line, self.token.position)
+            raise UnexpectedTokenError(self.token.value, self.token.position)
 
     def math_expr(self):
         node = self.term()
@@ -130,7 +128,7 @@ class JsParser:
             else:
                 break
             self._next_token()
-            node = Node(kind, children=[node, self.term()])
+            node = JsNode(kind, children=[node, self.term()], position=self.token.position)
         return node
 
     def test(self):
@@ -151,7 +149,7 @@ class JsParser:
             else:
                 return node
             self._next_token()
-            node = Node(kind, children=[node, self.math_expr()])
+            node = JsNode(kind, children=[node, self.math_expr()], position=self.token.position)
         return node
 
     def expr(self):
@@ -160,16 +158,15 @@ class JsParser:
         node = self.test()
         if node.kind == NodeType.Var and isinstance(self.token, tt.EqualsToken):
             self._next_token()
-            node = Node(NodeType.Set, children=[node, self.expr()])
+            node = JsNode(NodeType.Set, children=[node, self.expr()], position=self.token.position)
         return node
 
     def decl_expr(self):
-        node = Node(NodeType.Decl)
+        node = JsNode(NodeType.Decl, position=self.token.position)
         self._next_token()
         if not isinstance(self.token, tt.IdentifierToken):
-            raise ExpectedButFoundTokenError('identifier', self.token.value, self.token.line,
-                                             self.token.position)
-        node.children.append(Node(NodeType.Var, self.token.value))
+            raise ExpectedButFoundTokenError('identifier', self.token.value, self.token.position)
+        node.children.append(JsNode(NodeType.Var, self.token.value, position=self.token.position))
 
         var_init = self.expr_with_semicolon()
         node.children.append(var_init)
@@ -180,25 +177,22 @@ class JsParser:
             return self.decl_expr()
         node = self.expr()
         if not isinstance(self.token, tt.SemicolonToken):
-            raise ExpectedButFoundTokenError(';', self.token.value, self.token.line,
-                                             self.token.position)
+            raise ExpectedButFoundTokenError(';', self.token.value, self.token.position)
         self._next_token()
         return node
 
     def paren_expr(self):
         if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
-            raise ExpectedButFoundTokenError('(', self.token.value, self.token.line,
-                                             self.token.position)
+            raise ExpectedButFoundTokenError('(', self.token.value, self.token.position)
         self._next_token()
         node = self.expr()
         if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == ')'):
-            raise ExpectedButFoundTokenError(')', self.token.value, self.token.line,
-                                             self.token.position)
+            raise ExpectedButFoundTokenError(')', self.token.value, self.token.position)
         self._next_token()
         return node
 
     def if_statement(self):
-        node = Node(NodeType.If)
+        node = JsNode(NodeType.If, position=self.token.position)
         self._next_token()
         if_condition = self.paren_expr()
         if_body = self.block()
@@ -214,20 +208,18 @@ class JsParser:
         return node
 
     def for_statement(self):
-        node = Node(NodeType.For)
+        node = JsNode(NodeType.For, position=self.token.position)
         self._next_token()
 
         if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == '('):
-            raise ExpectedButFoundTokenError('(', self.token.value, self.token.line,
-                                             self.token.position)
+            raise ExpectedButFoundTokenError('(', self.token.value, self.token.position)
         self._next_token()
         for_init = self.expr_with_semicolon()
         for_condition = self.expr_with_semicolon()
         for_step = self.expr()
 
         if not (isinstance(self.token, tt.DelimiterToken) and self.token.value == ')'):
-            raise ExpectedButFoundTokenError(')', self.token.value, self.token.line,
-                                             self.token.position)
+            raise ExpectedButFoundTokenError(')', self.token.value, self.token.position)
         self._next_token()
         for_body = self.block()
 
@@ -235,7 +227,7 @@ class JsParser:
         return node
 
     def while_statement(self):
-        node = Node(NodeType.While)
+        node = JsNode(NodeType.While, position=self.token.position)
         self._next_token()
 
         while_condition = self.paren_expr()
@@ -252,23 +244,23 @@ class JsParser:
         elif isinstance(self.token, tt.KeywordToken) and self.token.value == 'for':
             node = self.for_statement()
         else:
-            node = Node(NodeType.Expr, children=[self.expr_with_semicolon()])
+            node = JsNode(NodeType.Expr, children=[self.expr_with_semicolon()], position=self.token.position)
         return node
 
     def block(self):
         if isinstance(self.token, tt.DelimiterToken) and self.token.value == '{':
-            node = Node(NodeType.Block)
+            node = JsNode(NodeType.Block, position=self.token.position)
             self._next_token()
             while True:
                 if isinstance(self.token, tt.DelimiterToken) and self.token.value == '}':
                     self._next_token()
                     return node
                 if isinstance(self.token, tt.EofToken):
-                    raise JsParserError(None, None, 'Unexpected end of file')
+                    raise JsParserError(None, 'Unexpected end of file')
                 node.children.append(self.statement())
 
     def program(self):
-        node = Node(NodeType.Program)
+        node = JsNode(NodeType.Program)
         while True:
             if isinstance(self.token, tt.EofToken):
                 return node
@@ -280,7 +272,7 @@ class JsParser:
         self._next_token()
         node = self.program()
         if not isinstance(self.token, tt.EofToken):
-            raise JsParserError(None, None, "Invalid syntax")
+            raise JsParserError(None, "Invalid syntax")
         return node
 
     def _next_token(self):

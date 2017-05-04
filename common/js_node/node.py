@@ -1,14 +1,15 @@
-from js_parser.node_type import node_type_pretty
+from .node_type import node_type_pretty
+from common.position_in_file import PositionInFile
 
-class Node(object):
-    def __init__(self, kind, value=None, children=None):
+class JsNode(object):
+    def __init__(self, kind, value=None, children=None, position=None):
         self.kind = kind
         self.value = value
 
-        self.position = {
-            'line': 0,
-            'position': 0
-        }
+        if position is None:
+            self.position = PositionInFile()
+        else:
+            self.position = position
 
         if children is None:
             self.children = []

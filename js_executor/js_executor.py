@@ -1,15 +1,15 @@
 from js_lexer.js_lexer import JsLexer
 from js_parser.js_parser import JsParser
 
-from js_parser.exceptions.js_parser_error import JsParserError
+from js_parser.errors import JsParserError
 from js_lexer.js_lexer_error import JsLexerError
-from js_parser import NodeType
+from common.js_node import NodeType
 from .errors import JsRuntimeError, JsUndeclaredVariableError
-from interpreter.scope import Scope
-from interpreter.default_functions import default_functions
+from .scope import Scope
+from .default_functions import default_functions
 from .types import JsString, JsNumber, JsArray, JsBoolean, JsObject, JsUndefined
 
-class Interpreter:
+class JsExecutor:
     def __init__(self, program_text):
         self.js_lexer = JsLexer(program_text)
         self.parser = JsParser(self.js_lexer)
@@ -55,7 +55,10 @@ class Interpreter:
             scope = Scope()
 
             self._execute_node(syntax_tree, scope)
-        except (JsParserError, JsLexerError) as err:
+            return {
+                'success': True
+            }
+        except (JsParserError, JsLexerError, JsRuntimeError) as err:
             return {
                 'success': False,
                 'error': str(err)
@@ -73,8 +76,10 @@ class Interpreter:
     def _execute_attribute(self, node, scope):
         variable = self._execute_node(node.children[0], scope)
         if node.value not in variable.properties:
-            raise JsRuntimeError('{} has no method or property {}'.format(node.children[0].value,
-                                  node.value), node.position)
+            raise JsRuntimeError(
+                '{} has no method or property {}'
+                .format(node.children[0].value, node.value), node.position
+            )
         return variable.properties[node.value]
 
     def _execute_equals(self, node, scope):
@@ -189,7 +194,11 @@ class Interpreter:
         if callable_object.kind == NodeType.DefaultFunction:
             if callable_object.value not in default_functions:
                 raise JsRuntimeError('Undeclared function', callable_object.position)
-            return default_functions[callable_object.value](arguments)
+            try:
+                return default_functions[callable_object.value](arguments)
+            except JsRuntimeError as err:
+                err.position = callable_object.position
+                raise
         elif callable_object.kind == NodeType.Attribute:
             prop = self._execute_node(callable_object, scope)
             if not callable(prop):
@@ -212,11 +221,12 @@ class Interpreter:
 
         is_var_added = scope.add_variable_if_not_exists(variable_name)
         if not is_var_added:
-            raise JsRuntimeError('Undeclared variable {}'.format(variable_name), node.position)
+            raise JsRuntimeError('Variable {} already declared'
+                                 .format(variable_name), node.position)
 
         init_node = node.children[1]
 
-        # Check what node creates when no initialization
+        # Check if initialization is here
         if not init_node.kind == NodeType.Var:
             init_data = self._execute_node(init_node, scope)
 
@@ -237,7 +247,8 @@ class Interpreter:
 
         self._execute_node(node.children[0], new_scope)
         while True:
-            condition_satisfied = self._execute_node(node.children[1], new_scope)._js_to_boolean().value
+            condition_satisfied = self._execute_node(node.children[1],
+                new_scope)._js_to_boolean().value
             if condition_satisfied:
                 self._execute_node(node.children[3], new_scope)
                 self._execute_node(node.children[2], new_scope)

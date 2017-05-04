@@ -1,6 +1,7 @@
 import re
 from js_lexer.js_lexer_error import JsLexerError
-import js_token.token_types as token_class
+import common.js_token.token_types as token_class
+from common.position_in_file import PositionInFile
 
 KEYWORDS = [
     'if', 'else',
@@ -10,7 +11,7 @@ KEYWORDS = [
 ]
 
 DEFAULT_FUNCTIONS = [
-    'input', 'print', 'parseInt', 'parseFloat', 'Math.sqrt'
+    'console.input', 'console.log', 'parseInt', 'parseFloat', 'Math.sqrt'
 ]
 
 RULES = [
@@ -83,13 +84,13 @@ class JsLexer(object):
                 if file_indent_size is None:
                     file_indent_size = indent_size
                     indents.append(indents[-1] + 1)
-                    tokens[0] = token_class.IndentToken(None, tokens[0].line, tokens[0].position)
+                    tokens[0] = token_class.IndentToken(None, PositionInFile(tokens[0].line, tokens[0].position))
                 else:
                     if indent_size == (indents[-1]) * file_indent_size:
                         tokens.pop(0)
                     elif indent_size == (indents[-1] + 1) * file_indent_size:
-                        tokens[0] = token_class.IndentToken(None, tokens[0].line,
-                                                            tokens[0].position)
+                        tokens[0] = token_class.IndentToken(None, PositionInFile(tokens[0].line,
+                                                            tokens[0].position))
                         indents.append(indents[-1] + 1)
                     elif indent_size % file_indent_size == 0 and \
                             indent_size < indents[-1] * file_indent_size:
@@ -98,15 +99,15 @@ class JsLexer(object):
 
                         while indents[-1] * file_indent_size > indent_size:
                             indents.pop()
-                            tokens.insert(0, token_class.DedentToken(None, tokens[0].line,
-                                                                     tokens[0].position))
+                            tokens.insert(0, token_class.DedentToken(None, PositionInFile(tokens[0].line,
+                                                                     tokens[0].position)))
                     else:
-                        raise JsLexerError('Incorrect indent size', self.current_line_number,
-                                           0, indent_size)
+                        raise JsLexerError('Incorrect indent size', PositionInFile(self.current_line_number,
+                                           0), indent_size)
 
             all_tokens = all_tokens + tokens
 
-        all_tokens.append(token_class.EofToken(None, self.current_line_number, 0))
+        all_tokens.append(token_class.EofToken(None, PositionInFile(self.current_line_number, 0)))
         return all_tokens
 
     def _analyze_line(self, line):
@@ -135,10 +136,10 @@ class JsLexer(object):
             groupname = match.lastgroup
             token_type = self.group_type[groupname]
             parsed_token = TOKEN_CLASSES[token_type](match.group(groupname),
-                                                     self.current_line_number,
-                                                     position)
+                                                     PositionInFile(self.current_line_number,
+                                                     position))
             position = match.end()
             return (parsed_token, position)
 
         # if we're here, no rule matched
-        raise JsLexerError('Invalid token', self.current_line_number, position, line[position])
+        raise JsLexerError('Invalid token', PositionInFile(self.current_line_number, position), line[position])

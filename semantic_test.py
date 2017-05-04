@@ -1,13 +1,13 @@
 import colorama
 
-from interpreter.interpreter import Interpreter
+from js_executor.js_executor import JsExecutor
 
 def run():
     colorama.init()
     with open('./test/test.py') as program_file:
-        interpreter = Interpreter(program_file.read())
+        js_executor = JsExecutor(program_file.read())
 
-        result = interpreter.execute()
+        result = js_executor.execute()
 
         if result['success']:
             print(colorama.Fore.GREEN + 'The code is fine')

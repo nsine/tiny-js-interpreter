@@ -2,7 +2,7 @@ import colorama
 
 from js_lexer.js_lexer import JsLexer
 from js_parser.js_parser import JsParser
-from js_parser.exceptions.js_parser_error import JsParserError
+from js_parser.errors.js_parser_error import JsParserError
 from js_lexer.js_lexer_error import JsLexerError
 
 def run():

@@ -1,16 +1,19 @@
-var user_input = input('Enter number: ');
-var n = parseFloat(user_input);
+var user_input = console.input('Enter array items through space: ');
+var arr_items = user_input.split(' ');
 
-var isPrime = true;
+var arr = [];
+var i = 0;
 
-for (var i = 2; i <= Math.sqrt(n); i = i + 1) {
-    if (n % i == 0) {
-        isPrime = false;
-    }
+for (i = 0; i < arr_items.length(); i = i + 1) {
+    arr.push(parseFloat(arr_items[i]));
 }
 
-if (isPrime) {
-    print('n is prime');
-} else {
-    print('n is not prime');
+var length = arr.length();
+var sum = 0;
+
+for (i = 0; i < length; i = i + 1) {
+    sum = sum + arr[i];
 }
+
+var avg = sum / length;
+console.log('Result:', avg);
